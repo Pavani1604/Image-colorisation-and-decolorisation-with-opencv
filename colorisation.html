@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Colorization</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Background image -->
+    <div class="bg-image"></div>
+    
+   <!-- HTML form for uploading an image -->
+<form action="/colorize" method="POST" enctype="multipart/form-data" class="image-upload-form">
+    <label for="image-upload" class="custom-file-upload">
+        <i class="fa fa-cloud-upload"></i> Choose an Image
+    </label>
+    <input type="file" id="image-upload" name="image" accept="image/*" required>
+    <button class="submit">Colorize</button>
+</form>
+    <!-- Display both the input and colorized images side by side -->
+    <div class="image-container">
+        <!-- Input Image -->
+        <div class="image-frame">
+            {% if base64_image %}
+                <h2>Input Image</h2>
+                <img src="data:image/jpeg;base64,{{ base64_image }}" alt="Input Image">
+            {% endif %}
+        </div>
+<!-- Display the colorized image if available -->
+<div class="image-frame">
+    {% if base64_colorized_image %}
+        <h2>Colorized Image</h2>
+        <img src="data:image/jpeg;base64,{{ base64_colorized_image }}" alt="Colorized Image">
+        <a href="{{ url_for('download_colorized_image') }}" download="temp_colorized_image.jpg">Download Colorized Image</a>
+        
+            
+    {% endif %}
+</div>
+<!-- Add this section to display accuracy -->
+<div class="accuracy-container">
+    {% if mse and psnr %}
+        <h2>Accuracy</h2>
+        <p>Mean Squared Error: {{ mse }}</p>
+        <p>Peak Signal-to-Noise Ratio: {{ psnr }}</p>
+    {% endif %}
+</div>
+
+<!-- Add JavaScript to calculate accuracy after colorization -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var colorizeButton = document.querySelector('.submit');
+    colorizeButton.addEventListener('click', function() {
+        var imageUploadInput = document.getElementById('image-upload');
+        var formData = new FormData();
+        formData.append('image', imageUploadInput.files[0]);
+
+        fetch('/colorize', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Display accuracy values
+            var accuracyContainer = document.querySelector('.accuracy-container');
+            accuracyContainer.innerHTML = `
+                <h2>Accuracy</h2>
+                <p>Mean Squared Error: ${data.mse}</p>
+                <p>Peak Signal-to-Noise Ratio: ${data.psnr}</p>
+            `;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
+
+    </div>
+</body>
+</html>
